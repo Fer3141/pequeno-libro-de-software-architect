@@ -6,8 +6,12 @@ Guía rápida del rol de arquitecto de software: qué hace, niveles de arquitect
 
 - [¿Qué es un arquitecto de software?](#qué-es-un-arquitecto-de-software)
 - [Niveles de arquitectura](#niveles-de-arquitectura)
-- [Base técnica: lenguajes, paradigmas y principios](#base-técnica-lenguajes-paradigmas-y-principios)
+- [Atributos de calidad: qué aspectos tener en cuenta](#atributos-de-calidad-qué-aspectos-tener-en-cuenta)
+- [Paradigmas de programación](#paradigmas-de-programación)
+- [Principios de diseño](#principios-de-diseño)
 - [Estilos y patrones arquitectónicos](#estilos-y-patrones-arquitectónicos)
+- [Modelos y vistas de arquitectura](#modelos-y-vistas-de-arquitectura)
+- [Cómo tomar decisiones de arquitectura](#cómo-tomar-decisiones-de-arquitectura)
 - [Diseño orientado al dominio y sistemas distribuidos](#diseño-orientado-al-dominio-y-sistemas-distribuidos)
 - [APIs e integración](#apis-e-integración)
 - [Datos](#datos)
@@ -44,18 +48,49 @@ El trabajo de arquitectura ocurre en distintas escalas, que no son excluyentes: 
 
 ---
 
-## Base técnica: lenguajes, paradigmas y principios
+## Atributos de calidad: qué aspectos tener en cuenta
 
-Un arquitecto no necesita dominar todos los lenguajes, pero sí entender los **paradigmas** lo suficiente para elegir la herramienta correcta y para poder leer y cuestionar diseños en cualquiera de ellos:
+Antes de elegir un estilo, un patrón o una tecnología, hay que tener claro qué se le pide al sistema más allá de "que funcione". Estos son los **atributos de calidad** (también llamados requisitos no funcionales, o coloquialmente las *"-ilities"*), y casi ninguna decisión de arquitectura tiene sentido sin priorizarlos primero:
 
-- **Programación orientada a objetos (OOP)**: modelar el dominio como objetos con estado y comportamiento, el paradigma dominante en sistemas empresariales grandes.
-- **Programación funcional**: funciones puras, inmutabilidad, composición, cada vez más presente incluso dentro de lenguajes orientados a objetos, sobre todo para lógica de negocio compleja donde el estado mutable es fuente de bugs.
-- **Programación reactiva**: modelar el sistema como flujos de eventos asíncronos que se propagan y transforman, algo natural para UIs interactivas y sistemas con mucho I/O concurrente.
+- **Rendimiento (performance)**: qué tan rápido responde el sistema bajo carga normal (latencia, throughput).
+- **Escalabilidad**: qué tan bien el sistema absorbe más carga agregando recursos, ya sea escalando verticalmente (una máquina más grande) u horizontalmente (más instancias).
+- **Disponibilidad (availability)**: qué porcentaje del tiempo el sistema responde correctamente, típicamente expresado en "nueves" (99.9%, 99.99%...).
+- **Confiabilidad (reliability)**: que el sistema haga lo que tiene que hacer de forma consistente, sin corromper datos ni comportarse de forma impredecible ante fallos parciales.
+- **Seguridad**: que solo acceda a los datos y funciones quien está autorizado, y que los datos estén protegidos en tránsito y en reposo (ver la sección [Seguridad](#seguridad) más abajo).
+- **Mantenibilidad**: qué tan fácil es entender, modificar y extender el sistema con el tiempo, sobre todo por gente que no lo escribió originalmente.
+- **Testabilidad**: qué tan fácil es verificar automáticamente que el sistema funciona como se espera, sin depender de pruebas manuales.
+- **Usabilidad**: qué tan fácil es de usar para quien lo opera o lo consume, ya sea un usuario final o un desarrollador integrando una API.
+- **Costo y operabilidad**: cuánto cuesta correr el sistema (infraestructura, licencias) y cuánto esfuerzo humano hace falta para mantenerlo operativo día a día.
 
-**Principios de diseño** que atraviesan cualquier paradigma:
+La parte difícil no es la lista: es que **estos atributos compiten entre sí**. Más disponibilidad casi siempre cuesta más dinero y complejidad. Más seguridad casi siempre agrega fricción y algo de latencia. Optimizar mucho el rendimiento suele complicar la mantenibilidad del código. El trabajo real de un arquitecto es priorizar explícitamente dos o tres de estos atributos para un sistema dado (los que el negocio realmente necesita) y aceptar conscientemente que los demás quedan en un nivel "suficiente", no óptimo.
 
-- **SOLID**: cinco principios (responsabilidad única, abierto/cerrado, sustitución de Liskov, segregación de interfaces, inversión de dependencias) que buscan código más fácil de extender sin romper lo existente.
+---
+
+## Paradigmas de programación
+
+Un **paradigma** es una forma de pensar y estructurar el código, no un lenguaje puntual (muchos lenguajes modernos permiten mezclar varios). La distinción más alta es entre dos formas de decirle a la computadora qué hacer:
+
+- **Imperativo**: el código describe **paso a paso cómo** llegar al resultado (una secuencia de instrucciones que van cambiando el estado del programa). Es el estilo más cercano a cómo funciona el hardware por debajo, y el más intuitivo al empezar a programar.
+- **Declarativo**: el código describe **qué** resultado se quiere, dejando que el lenguaje o el motor decida cómo lograrlo. SQL es el ejemplo clásico: se declara qué datos se necesitan, no el algoritmo para buscarlos.
+
+Dentro de esos dos grandes grupos, los paradigmas más relevantes para un arquitecto:
+
+- **Programación orientada a objetos (OOP)**: imperativo en la práctica. Modela el dominio como objetos con estado y comportamiento agrupados, el paradigma dominante en sistemas empresariales grandes (Java, C#, gran parte del ecosistema .NET/Spring).
+- **Programación funcional**: declarativo. Se basa en funciones puras (mismo input, mismo output, sin efectos secundarios), inmutabilidad y composición de funciones pequeñas. Cada vez más presente incluso dentro de lenguajes orientados a objetos, sobre todo para lógica de negocio compleja donde el estado mutable compartido es fuente frecuente de bugs difíciles de reproducir.
+- **Programación reactiva**: modela el sistema como flujos de datos y eventos asíncronos que se propagan y se transforman con operadores (map, filter, merge...), en vez de pedir el dato de forma bloqueante. Natural para UIs interactivas y sistemas con mucho I/O concurrente.
+- **Programación orientada a eventos (event-driven)**: el sistema reacciona a eventos que van ocurriendo (un pedido creado, un pago confirmado) en vez de seguir un flujo de control lineal. Es más un paradigma a nivel de arquitectura que de lenguaje, y se apoya en colas de mensajes (ver [APIs e integración](#apis-e-integración)).
+
+Un arquitecto no necesita dominar todos los lenguajes, pero sí entender estos paradigmas lo suficiente como para elegir el que mejor encaje con el problema (por ejemplo, funcional para lógica de negocio con muchas reglas y poco estado compartido, orientado a eventos para procesos de negocio que naturalmente ocurren en pasos desacoplados en el tiempo) y para poder leer y cuestionar diseños escritos en cualquiera de ellos.
+
+---
+
+## Principios de diseño
+
+Reglas y heurísticas que atraviesan cualquier paradigma, pensadas para que el código siga siendo manejable a medida que el sistema crece:
+
+- **SOLID**: cinco principios (responsabilidad única, abierto/cerrado, sustitución de Liskov, segregación de interfaces, inversión de dependencias) que buscan código más fácil de extender sin romper lo existente. Nacieron en el mundo orientado a objetos, pero varias de sus ideas (responsabilidad única, bajo acoplamiento) aplican igual en otros paradigmas.
 - **Patrones de diseño** (Gang of Four y otros): soluciones ya probadas a problemas recurrentes de diseño, útiles como vocabulario común entre desarrolladores, peligrosos si se aplican por moda en vez de porque el problema realmente los necesita.
+- **DRY (Don't Repeat Yourself) y KISS (Keep It Simple)**: evitar duplicar la misma lógica en varios lugares (para no tener que sincronizar cambios a mano en cada copia), y preferir la solución más simple que resuelva el problema real.
 - **Simplicidad primero**: la habilidad de resistir la sobre-ingeniería es tan importante como conocer los patrones. Un arquitecto que mete abstracciones para un problema que no existe todavía genera más deuda técnica que uno que no sabía el patrón.
 
 ---
@@ -75,6 +110,46 @@ La decisión de más alto impacto y más difícil de revertir: cómo se estructu
 - **Service mesh**: una capa de infraestructura dedicada a la comunicación entre servicios (reintentos, circuit breakers, mTLS, observabilidad) sacada del código de la aplicación: típico en clusters de Kubernetes con muchos microservicios (ver el [pequeño libro de Kubernetes](https://github.com/Fer3141/pequeno-libro-de-kubernetes)).
 
 > No hay un estilo "correcto" en abstracto: la elección depende del tamaño del equipo, la escala esperada, y cuánta complejidad operativa la organización puede sostener. Empezar con microservicios en un equipo de 3 personas suele ser un error tan grande como quedarse con un monolito gigante en una organización de 500 ingenieros.
+
+---
+
+## Modelos y vistas de arquitectura
+
+Un sistema no se puede explicar con un solo diagrama: un ejecutivo necesita ver otra cosa que un desarrollador que va a tocar el código mañana. Los **modelos de arquitectura** son formas estandarizadas de representar el mismo sistema desde distintos niveles de abstracción, para que cada audiencia vea lo que necesita sin ahogarse en detalle irrelevante:
+
+- **Modelo C4** (de Simon Brown): cuatro niveles de zoom, pensados para "empezar grande e ir agrandando el detalle a demanda":
+  1. **Contexto**: el sistema como una caja única, mostrando con qué usuarios y sistemas externos interactúa. Para audiencias no técnicas.
+  2. **Contenedores**: abre la caja y muestra las aplicaciones/servicios de alto nivel que la componen (una API, una base de datos, una app web) y cómo se comunican.
+  3. **Componentes**: abre un contenedor puntual y muestra sus piezas internas principales (controladores, servicios, repositorios).
+  4. **Código**: el nivel de detalle de clases o módulos, generalmente autogenerado por el IDE en vez de mantenido a mano.
+  
+  La idea central es no mezclar niveles en el mismo diagrama: cada uno responde una pregunta distinta.
+
+- **Modelo de las 4+1 vistas** (Kruchten): describe el sistema desde cuatro perspectivas independientes, todas ancladas a un quinto elemento central, los casos de uso: la **vista lógica** (funcionalidad para el usuario final, típicamente un diagrama de clases/objetos), la **vista de procesos** (concurrencia y comunicación en tiempo de ejecución), la **vista de desarrollo** (cómo se organiza el código en módulos/paquetes) y la **vista física** (cómo se despliega el software sobre hardware/infraestructura real).
+
+- **arc42**: una plantilla de documentación de arquitectura de código abierto, con secciones predefinidas (restricciones, contexto, estrategia de solución, vista de bloques, vista de runtime, decisiones, riesgos...) pensada para que ningún equipo tenga que inventar desde cero cómo documentar su sistema. Más información: https://arc42.org/
+
+- **UML**: el estándar más antiguo y formal para diagramar software (diagramas de clases, secuencia, componentes, despliegue...). En la práctica, la mayoría de los equipos usan solo un subconjunto liviano de UML combinado con C4, en vez de UML completo, porque mantener diagramas UML exhaustivos actualizados suele costar más de lo que aportan.
+
+> Cualquiera de estos modelos falla si nadie lo mantiene actualizado. Un diagrama desactualizado que el equipo sigue consultando genera más daño que no tener diagrama, porque transmite una falsa sensación de entender el sistema.
+
+---
+
+## Cómo tomar decisiones de arquitectura
+
+La mayor parte del trabajo de un arquitecto no es dibujar diagramas, es decidir entre opciones con información incompleta y hacerlo de forma que el resto del equipo pueda entender y confiar en esa decisión después.
+
+**Un marco simple para clasificar la decisión antes de tomarla**, popularizado por Amazon: preguntarse si es una decisión de **una sola vía** (*one-way door*, difícil o imposible de revertir, como elegir la base de datos principal o el proveedor de nube) o de **doble vía** (*two-way door*, fácil de revertir si sale mal, como el nombre de una variable de configuración). Las decisiones de una sola vía merecen análisis cuidadoso, consulta con otros y documentación formal; las de doble vía se pueden tomar rápido y ajustar después. Tratar toda decisión como si fuera de una sola vía es la forma más común de paralizar a un equipo.
+
+**Análisis de trade-offs**: dado que los [atributos de calidad](#atributos-de-calidad-qué-aspectos-tener-en-cuenta) compiten entre sí, casi ninguna decisión de arquitectura es "la mejor" en abstracto, solo es la mejor **para las prioridades de este sistema en particular**. El ejercicio práctico es, para cada opción sobre la mesa, listar explícitamente qué atributo mejora y cuál empeora, en vez de evaluar solo el atributo que más le importa a quien está decidiendo.
+
+**ATAM** (*Architecture Tradeoff Analysis Method*): un método formal, típicamente reservado para decisiones grandes o de alto riesgo, donde se definen escenarios concretos por cada atributo de calidad prioritario (por ejemplo, "el sistema debe seguir respondiendo si un nodo de la base de datos cae") y se evalúa cómo cada arquitectura candidata se comporta frente a esos escenarios, con stakeholders de distintas áreas presentes en la evaluación.
+
+**Matriz de decisión ponderada**: cuando hay varias opciones y varios criterios, una tabla simple ayuda a que la decisión no dependa solo de quién habló más fuerte en la reunión: se listan las opciones, se listan los criterios relevantes con un peso según su importancia para este proyecto, se puntúa cada opción por criterio, y se suma. No reemplaza el criterio humano, pero hace explícitos los criterios que si no quedan implícitos y sin discutir.
+
+**Documentar con un ADR** (*Architecture Decision Record*): un archivo corto por decisión importante, versionado junto con el código, con una estructura típica de: título, estado (propuesta/aceptada/reemplazada), contexto (qué problema fuerza la decisión), la decisión en sí, y las consecuencias (qué se gana y qué se sacrifica). El valor no está en el archivo en sí, está en que dentro de un año, cuando alguien pregunte "¿por qué elegimos esto?", la respuesta esté escrita en vez de perdida en la memoria de quien ya no está en el equipo.
+
+**Involucrar a los stakeholders correctos según el tipo de decisión**: una decisión que afecta el costo operativo necesita a quien paga la infraestructura en la conversación; una que afecta la seguridad necesita al equipo de seguridad; una que afecta la experiencia de otros equipos de desarrollo necesita su feedback antes de cerrarla, no después de implementada.
 
 ---
 
@@ -137,7 +212,7 @@ Para el detalle práctico de cómo automatizar estos controles en un pipeline (e
 
 - **Control de versiones (Git)**: la base de cualquier flujo de trabajo en equipo. Ver el [pequeño libro de Git](https://github.com/Fer3141/pequeno-libro-de-git).
 - **TDD (desarrollo guiado por pruebas)**: escribir el test antes que el código que lo hace pasar. Más allá de la disciplina en sí, obliga a pensar el diseño de la interfaz de un componente antes de implementarlo.
-- **Documentación de arquitectura**: registrar no solo el diseño final, sino las alternativas consideradas y por qué se descartaron (un formato común es el **ADR**, Architecture Decision Record). Así el equipo evita repetir discusiones ya cerradas o revertir una decisión sin entender el contexto que la motivó.
+- **Documentación de arquitectura**: registrar no solo el diseño final, sino las alternativas consideradas y por qué se descartaron con un **ADR** (ver la sección [Cómo tomar decisiones de arquitectura](#cómo-tomar-decisiones-de-arquitectura)). Así el equipo evita repetir discusiones ya cerradas o revertir una decisión sin entender el contexto que la motivó.
 - **Herramientas y flujo de trabajo del equipo**: sistemas de tickets, wikis internas, herramientas de diagramación (UML y notaciones más livianas como C4). Un diagrama que nadie mantiene actualizado es peor que no tener diagrama, porque genera confianza falsa.
 
 ---
