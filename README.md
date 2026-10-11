@@ -1,6 +1,6 @@
 # Pequeño libro de Software Architect
 
-Guía rápida del rol de arquitecto de software: qué hace, niveles de arquitectura, estilos y patrones, y las áreas de conocimiento que cubre el camino, siguiendo la misma estructura que el [roadmap de roadmap.sh](https://roadmap.sh/software-architect), explicada en español.
+Guía rápida del rol de arquitecto de software: qué hace, niveles de arquitectura, estilos y patrones y las áreas de conocimiento que cubre el camino.
 
 ## Índice
 
