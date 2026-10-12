@@ -26,11 +26,11 @@
 
 Un arquitecto de software toma las **decisiones estructurales de alto nivel** de un sistema: las que son caras o casi imposibles de cambiar después (el estilo arquitectónico, cómo se dividen los componentes, qué tecnologías base se usan, cómo se comunican los servicios entre sí), y se asegura de que esas decisiones sigan sirviendo a los requisitos del negocio a medida que el sistema crece.
 
-No es "el que más sabe programar", aunque suele tener background técnico sólido: el foco del rol se corre de escribir código a **diseñar el sistema y comunicar ese diseño** a equipos, a otros arquitectos y a stakeholders no técnicos. Responsabilidades típicas:
+No es "el que más sabe programar", aunque suele tener background técnico sólido: el foco del rol se corre de escribir código a **diseñar el sistema y comunicar ese diseño** a equipos, a otros arquitectos y a stakeholders no técnicos. Responsabilidades:
 
 - Definir la arquitectura general y los límites entre componentes/servicios.
 - Elegir (y justificar) tecnologías, patrones y estándares para todo el equipo u organización.
-- Balancear atributos de calidad en tensión entre sí: rendimiento, seguridad, mantenibilidad, costo, velocidad de entrega: casi nunca se puede maximizar todo a la vez, así que el trabajo real es decidir **qué se sacrifica** conscientemente.
+- Balancear atributos de calidad en tensión entre sí: rendimiento, seguridad, mantenibilidad, costo, velocidad de entrega: casi nunca se puede maximizar todo a la vez, así que el trabajo real es decidir **qué se sacrifica**.
 - Documentar decisiones de diseño y sus razones (no solo el "qué", también el "por qué"), para que el equipo no las repita mal ni las revierta sin entender el contexto original.
 - Mentorear a otros desarrolladores y revisar diseños antes de que se conviertan en código.
 
@@ -38,7 +38,7 @@ No es "el que más sabe programar", aunque suele tener background técnico sóli
 
 ## Niveles de arquitectura
 
-El trabajo de arquitectura ocurre en distintas escalas, que no son excluyentes: muchas veces la misma persona transita entre ellas según el tamaño de la organización.
+El trabajo de arquitectura ocurre en distintas escalas:
 
 - **Arquitectura de aplicación (Application Architecture)**: el diseño interno de un sistema puntual, sus capas, módulos, cómo se organiza el código y se comunican sus componentes.
 - **Arquitectura de solución (Solution Architecture)**: cómo una solución de negocio específica (que puede incluir varias aplicaciones, servicios e integraciones) resuelve un problema puntual, encajando con lo que ya existe alrededor.
