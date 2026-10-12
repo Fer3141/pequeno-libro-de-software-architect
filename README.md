@@ -1,7 +1,5 @@
 # Pequeño libro de Software Architect
 
-Guía rápida del rol de arquitecto de software: qué hace, niveles de arquitectura, estilos y patrones y las áreas de conocimiento que cubre el camino.
-
 ## Índice
 
 - [¿Qué es un arquitecto de software?](#qué-es-un-arquitecto-de-software)
